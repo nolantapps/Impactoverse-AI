@@ -7,8 +7,8 @@ import Experience from "../components/3d/Experience";
 export default function AvatarPage() {
   return (
     <div>
-      <TestCreate />
-      {/* <ExpertSelection /> */}
+      {/* <TestCreate /> */}
+      <ExpertSelection />
       {/* <Experience /> */}
     </div>
   );

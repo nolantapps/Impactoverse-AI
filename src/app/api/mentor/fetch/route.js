@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const cookieStore = cookies();
-  const userId = cookieStore.get("userId")?.value; // server-side cookie reading
+  const userId = await cookieStore.get("userId")?.value; // server-side cookie reading
   console.log("Cookie userId:", userId);
 
   await dbConnect();

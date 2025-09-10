@@ -10,6 +10,7 @@ import {
   Shield,
   Gem,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Map icon name from DB to actual component
 const iconMap = {
@@ -24,8 +25,12 @@ const iconMap = {
 };
 
 function AvatarCard({ avatar }) {
+  const router = useRouter();
+
   const handleClick = () => {
-    window.open("https://3d-mentor-3js.vercel.app/", "_blank");
+    // Store mentor id in localStorage
+    localStorage.setItem("selectedMentorId", avatar._id);
+    router.push("/route/experience");
   };
 
   const IconComponent = iconMap[avatar.icon] || User; // fallback to User
@@ -68,6 +73,7 @@ function AvatarCard({ avatar }) {
 
 function ExpertSelection() {
   const [mentors, setMentors] = useState([]);
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/mentor/fetch")
@@ -75,6 +81,21 @@ function ExpertSelection() {
       .then((data) => setMentors(data))
       .catch((err) => console.error("Error fetching mentors:", err));
   }, []);
+
+  const handleDelete = async (mentorId) => {
+    try {
+      const res = await fetch(`/api/mentor/${mentorId}/delete`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setMentors((prev) => prev.filter((mentor) => mentor._id !== mentorId));
+      } else {
+        console.error("Failed to delete mentor");
+      }
+    } catch (error) {
+      console.error("Error deleting mentor:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -95,6 +116,14 @@ function ExpertSelection() {
               learning experience. Each avatar represents a unique journey of
               discovery and growth.
             </p>
+
+            {/* Create Button */}
+            <button
+              onClick={() => router.push("/route/mentorCreate")}
+              className="mt-6 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition-all duration-200"
+            >
+              + Create Mentor
+            </button>
           </div>
         </div>
       </div>
@@ -103,7 +132,15 @@ function ExpertSelection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {mentors.map((mentor) => (
-            <AvatarCard key={mentor._id} avatar={mentor} />
+            <div key={mentor._id} className="relative">
+              <AvatarCard avatar={mentor} />
+              <button
+                onClick={() => handleDelete(mentor._id)}
+                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm"
+              >
+                Delete
+              </button>
+            </div>
           ))}
         </div>
       </div>

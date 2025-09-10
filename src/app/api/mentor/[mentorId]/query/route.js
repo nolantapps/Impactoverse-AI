@@ -1,4 +1,7 @@
+import { getCookie } from "@/utils/getCookies";
 import { Pinecone } from "@pinecone-database/pinecone";
+import { UNSTABLE_REVALIDATE_RENAME_ERROR } from "next/dist/lib/constants";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -6,7 +9,12 @@ const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req, { params }) {
-  const { question, user_id } = await req.json();
+  const { question } = await req.json();
+
+  const cookieStore = await cookies();
+  const user_id = cookieStore.get("userId")?.value; // server-side cookie reading
+  console.log("Cookie userId:", user_id);
+
   const mentor_id = await params;
 
   const embeddingResponse = await openai.embeddings.create({
