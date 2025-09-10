@@ -1,4 +1,5 @@
-// import { teachers } from "@/app/components/Teacher";
+import { getCookie } from "@/utils/getCookies";
+
 const { create } = require("zustand");
 const teachers = ["Abbi", "Alfie"];
 
@@ -17,6 +18,12 @@ export const useAITeacher = create((set, get) => ({
     }));
   },
 
+  // NEW: mentorId stored in the client state
+  mentorId: null,
+  setMentorId: (mentorId) => {
+    set(() => ({ mentorId }));
+  },
+
   classroom: "default",
   setClassroom: (classroom) => {
     set(() => ({
@@ -25,59 +32,96 @@ export const useAITeacher = create((set, get) => ({
   },
   loading: false,
 
-  askAI: async (question) => {
-    if (!question) {
-      return;
-    }
-    // here is the question from the user
+  askAI: async (question, opts = {}) => {
+    if (!question) return;
+
     const message = {
       question,
       id: get().messages.length,
     };
-    set(() => ({
-      loading: true,
-    }));
 
-    const res = await fetch(`/api/ai?question=${question}`);
-    const data = await res.json();
-    console.log(data);
-    // here is the nswer form ai
-    message.answer = data.message;
-    console.log("Question: ", question, "Answer: ", data.message);
+    set(() => ({ loading: true }));
 
-    // Saving question and answer to mongodb
-    await fetch("/api/modal", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question,
-        answer: data.message,
-      }),
-    });
+    try {
+      // Resolve mentorId: prefer store -> fallback to localStorage
+      const mentorId =
+        get().mentorId ?? localStorage.getItem("selectedMentorId");
+      // optional user_id (if you have auth), otherwise null
 
-    set(() => ({
-      currentMessages: message,
-    }));
-    set((state) => ({
-      messages: [...state.messages, message],
-      loading: false,
-    }));
-    get().playMessage(message);
+      const user_id = await getCookie("userId");
+      console.log("User ID: ", user_id);
+
+      let context = "";
+      // If we have a mentorId, first query Pinecone endpoint to get context
+      if (mentorId) {
+        const contextRes = await fetch(`/api/mentor/${mentorId}/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+
+        if (contextRes.ok) {
+          const ctxJson = await contextRes.json();
+
+          console.log("Context from server:", ctxJson);
+
+          context = ctxJson.context || "";
+        } else {
+          console.warn("Context fetch failed:", await contextRes.text());
+        }
+      } else {
+        console.warn("No mentorId found for context lookup.");
+      }
+
+      // Compose prompt: context (if any) + user question
+      const composed =
+        (context ? `Context:\n${context}\n\n` : "") + `User: ${question}`;
+
+      // Now call Deepseek (your existing endpoint)
+      const aiRes = await fetch(
+        `/api/ai?question=${encodeURIComponent(composed)}`
+      );
+      const aiJson = await aiRes.json();
+
+      message.answer = aiJson.message ?? aiJson?.response ?? "No response";
+      console.log("Question: ", question, "Answer: ", message.answer);
+
+      // Save Q/A to DB (existing behavior)
+      await fetch("/api/modal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          answer: message.answer,
+          mentorId,
+        }),
+      });
+
+      // update store
+      set(() => ({ currentMessages: message }));
+      set((state) => ({
+        messages: [...state.messages, message],
+        loading: false,
+      }));
+
+      // play TTS
+      get().playMessage(message);
+    } catch (err) {
+      console.error("askAI error:", err);
+      set(() => ({ loading: false }));
+    }
   },
 
   playMessage: async (message) => {
-    set(() => ({
-      currentMessages: message,
-    }));
-    if (!message.audioPlayer) {
-    }
-    set(() => ({
-      loading: true,
-    }));
-    // get tts
+    set(() => ({ currentMessages: message }));
+    set(() => ({ loading: true }));
+
     const audioRes = await fetch(
-      `/api/tts?teacher=${get().teacher}&text=${message.answer}`
+      `/api/tts?teacher=${get().teacher}&text=${encodeURIComponent(
+        message.answer
+      )}`
     );
+
     const audio = await audioRes.blob();
     const visemes = JSON.parse(await audioRes.headers.get("visemes"));
     const audioUrl = URL.createObjectURL(audio);
@@ -86,27 +130,21 @@ export const useAITeacher = create((set, get) => ({
     message.visemes = visemes;
     message.audioPlayer = audioPlayer;
     message.audioPlayer.onended = () => {
-      set(() => ({
-        currentMessages: null,
-      }));
+      set(() => ({ currentMessages: null }));
       set(() => ({
         loading: false,
-        messages: get().messages.map((m) => {
-          if (m.id === message.id) {
-            return message;
-          }
-          return m;
-        }),
+        messages: get().messages.map((m) =>
+          m.id === message.id ? message : m
+        ),
       }));
     };
     message.audioPlayer.currentTime = 0;
     message.audioPlayer.play();
   },
+
   stopMessage: (message) => {
     message.audioPlayer.pause();
-    set(() => ({
-      currentMessages: null,
-    }));
+    set(() => ({ currentMessages: null }));
   },
 }));
 

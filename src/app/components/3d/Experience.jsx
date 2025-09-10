@@ -25,6 +25,17 @@ import { useAITeacher } from "@/app/hooks/useAITeacher";
 
 function Experience() {
   const teacher = useAITeacher((state) => state.teacher);
+  const setMentorId = useAITeacher((state) => state.setMentorId);
+
+  useEffect(() => {
+    const mentorId = localStorage.getItem("selectedMentorId");
+    if (mentorId) {
+      setMentorId(mentorId);
+    } else {
+      console.warn("No selectedMentorId in localStorage");
+    }
+  }, [setMentorId]);
+
   return (
     <div className="h-screen w-full">
       <div className="absolute z-20"></div>

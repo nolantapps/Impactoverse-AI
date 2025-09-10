@@ -1,10 +1,13 @@
+"use client";
 import React, { useState } from "react";
-import { Upload, User, FileCheck, CheckCircle } from "lucide-react";
+import { Upload, User, FileCheck, CheckCircle, HomeIcon } from "lucide-react";
 import { getCookie } from "@/utils/getCookies";
+import { useRouter } from "next/navigation";
 
 export default function TestCreate() {
   const [step, setStep] = useState("create");
   const [mentorId, setMentorId] = useState("");
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -116,6 +119,10 @@ export default function TestCreate() {
         setFile(null);
       }
     }
+  };
+
+  const handleHome = () => {
+    router.push("/avatar");
   };
 
   return (
@@ -318,6 +325,7 @@ export default function TestCreate() {
                 >
                   Back
                 </button>
+
                 <button
                   type="submit"
                   disabled={loading || !file}
@@ -334,6 +342,13 @@ export default function TestCreate() {
                       <CheckCircle className="w-5 h-5" />
                     </>
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleHome}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+                >
+                  Go Home
                 </button>
               </div>
 
