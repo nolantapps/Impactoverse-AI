@@ -76,10 +76,19 @@ export const useAITeacher = create((set, get) => ({
       // Compose prompt: context (if any) + user question
       const composed =
         (context ? `Context:\n${context}\n\n` : "") + `User: ${question}`;
+      // Grab mentor details from /api/mentor/[mentorId]/route.js
+      const mentor = await fetch(`/api/mentor/${mentorId}`);
+      const mentorData = await mentor.json();
+      console.log("mentor is -----> ", mentorData.mentor);
 
-      // Now call Deepseek (your existing endpoint)
+      const aiSettings = mentorData?.mentor?.aiSettings;
+      const { audience, knowledge, outOfScope, responseStyle } = aiSettings;
+
+      // Now call LLM (your existing endpoint)
       const aiRes = await fetch(
-        `/api/ai?question=${encodeURIComponent(composed)}`
+        `/api/ai?question=${encodeURIComponent(
+          composed
+        )}&audience=${audience}&knowledge=${knowledge}&outOfScope=${outOfScope}&responseStyle=${responseStyle}`
       );
       const aiJson = await aiRes.json();
 
