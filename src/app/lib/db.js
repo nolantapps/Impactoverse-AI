@@ -1,6 +1,5 @@
 import mongoose, { Schema } from "mongoose";
 import crypto from "node:crypto";
-
 const UUID = Schema.Types.UUID;
 
 const UserSchema = new mongoose.Schema(
@@ -22,6 +21,12 @@ const MentorSchema = new mongoose.Schema(
     document_ids: { type: [{ type: String, ref: "Document" }], default: [] },
     name: { type: String },
     description: { type: String },
+    aiSettings: {
+      audience: { type: String, default: "adults" },
+      knowledge: { type: String, default: "docs-only" },
+      outOfScope: { type: String, default: "say-idk" },
+      responseStyle: { type: String, default: "short" },
+    },
   },
   { timestamps: true }
 );

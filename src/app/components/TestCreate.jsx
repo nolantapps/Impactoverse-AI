@@ -17,6 +17,12 @@ export default function TestCreate() {
   const [successMsg, setSuccessMsg] = useState("");
   const [dragActive, setDragActive] = useState(false);
 
+  // parameters state
+  const [audience, setAudience] = useState("adults");
+  const [knowledge, setKnowledge] = useState("docs-only");
+  const [outOfScope, setOutOfScope] = useState("say-idk");
+  const [responseStyle, setResponseStyle] = useState("short");
+
   const userId = getCookie("userId");
 
   const handleCreate = async (e) => {
@@ -80,6 +86,11 @@ export default function TestCreate() {
     } finally {
       setLoading(false);
     }
+
+    setTimeout(() => {
+      setStep("params"); // instead of finishing
+      setSuccessMsg("");
+    }, 2000);
   };
 
   const handleDrag = (e) => {
@@ -125,6 +136,26 @@ export default function TestCreate() {
     router.push("/avatar");
   };
 
+  const handleSaveParams = async () => {
+    const res = await fetch(`/api/mentor/${mentorId}/params`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        audience,
+        knowledge,
+        outOfScope,
+        responseStyle,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      router.push("/avatar"); // Move to next page
+    } else {
+      console.error("Failed to save mentor parameters");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -140,6 +171,7 @@ export default function TestCreate() {
 
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center">
+            {/* Step 1 */}
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 step === "create"
@@ -147,21 +179,43 @@ export default function TestCreate() {
                   : "bg-green-500 text-white"
               }`}
             >
-              {step === "upload" ? <CheckCircle className="w-5 h-5" /> : "1"}
+              {step !== "create" ? <CheckCircle className="w-5 h-5" /> : "1"}
             </div>
+
             <div
               className={`w-12 h-1 mx-2 ${
-                step === "upload" ? "bg-green-500" : "bg-gray-300"
+                step !== "create" ? "bg-green-500" : "bg-gray-300"
               }`}
             ></div>
+
+            {/* Step 2 */}
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 step === "upload"
                   ? "bg-purple-600 text-white"
+                  : step === "params"
+                  ? "bg-green-500 text-white"
                   : "bg-gray-300 text-gray-500"
               }`}
             >
-              2
+              {step === "params" ? <CheckCircle className="w-5 h-5" /> : "2"}
+            </div>
+
+            <div
+              className={`w-12 h-1 mx-2 ${
+                step === "params" ? "bg-green-500" : "bg-gray-300"
+              }`}
+            ></div>
+
+            {/* Step 3 */}
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                step === "params"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-300 text-gray-500"
+              }`}
+            >
+              3
             </div>
           </div>
         </div>
@@ -365,6 +419,102 @@ export default function TestCreate() {
                   </p>
                 </div>
               )}
+            </form>
+          )}
+          {step === "params" && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                console.log("Selected Params:", {
+                  audience,
+                  knowledge,
+                  outOfScope,
+                  responseStyle,
+                });
+                router.push("/avatar"); // after finishing, go to avatar
+              }}
+              className="space-y-6"
+            >
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Set Mentor Parameters
+                </h2>
+                <p className="text-gray-600">
+                  Choose how your mentor should respond
+                </p>
+              </div>
+
+              {/* Audience */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Audience
+                </label>
+                <select
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="kids">👶 Kids</option>
+                  <option value="adults">👩 Adults</option>
+                  <option value="professionals">👔 Professionals</option>
+                </select>
+              </div>
+
+              {/* Knowledge */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Knowledge
+                </label>
+                <select
+                  value={knowledge}
+                  onChange={(e) => setKnowledge(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="docs-only">📑 Docs-only</option>
+                  <option value="docs-first">📑 Docs-first</option>
+                  <option value="general">🌍 General</option>
+                </select>
+              </div>
+
+              {/* Out-of-Scope */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Out-of-scope
+                </label>
+                <select
+                  value={outOfScope}
+                  onChange={(e) => setOutOfScope(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="say-idk">❓ I don’t know</option>
+                  <option value="redirect">↪ Redirect</option>
+                  <option value="try-anyway">💡 Try anyway</option>
+                </select>
+              </div>
+
+              {/* Style */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Style
+                </label>
+                <select
+                  value={responseStyle}
+                  onChange={(e) => setResponseStyle(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="short">✍️ Short</option>
+                  <option value="detailed">📖 Detailed</option>
+                  <option value="step-by-step">🪜 Step-by-step</option>
+                </select>
+              </div>
+
+              <button
+              onClick={handleSaveParams}
+                type="submit"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+              >
+                Save & Continue
+              </button>
             </form>
           )}
         </div>
