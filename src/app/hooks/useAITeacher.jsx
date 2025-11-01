@@ -93,16 +93,18 @@ export const useAITeacher = create((set, get) => ({
       const aiJson = await aiRes.json();
 
       message.answer = aiJson.message ?? aiJson?.response ?? "No response";
+
       console.log("Question: ", question, "Answer: ", message.answer);
 
-      // Save Q/A to DB (existing behavior)
-      await fetch("/api/modal", {
+      // this saves the response from AI to mongodb
+      await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question,
-          answer: message.answer,
-          mentorId,
+          user_id: user_id,
+          mentor_id: mentorId,
+          role: "mentor",
+          content: message.answer,
         }),
       });
 

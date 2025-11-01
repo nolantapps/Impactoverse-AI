@@ -109,11 +109,11 @@ function ExpertSelection() {
               </div>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-purple-800 mb-4">
-              Choose Your Avatar
+              Choose Your Expert
             </h1>
             <p className="text-xl text-purple-600 max-w-2xl mx-auto leading-relaxed">
               Select your digital identity and step into an immersive 3D
-              learning experience. Each avatar represents a unique journey of
+              learning experience. Each Expert represents a unique journey of
               discovery and growth.
             </p>
 
@@ -122,7 +122,7 @@ function ExpertSelection() {
               onClick={() => router.push("/route/mentorCreate")}
               className="mt-6 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition-all duration-200"
             >
-              + Create Mentor
+              + Create Expert
             </button>
           </div>
         </div>
