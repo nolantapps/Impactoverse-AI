@@ -20,7 +20,7 @@ export async function GET(req) {
     // Audience tone
     if (audience === "kids") {
       systemPrompt +=
-        "Explain things in simple words like talking to a 10-year-old.\n";
+        "Explain things in simple words like talking to a 10-year-old..\n";
     } else if (audience === "professionals") {
       systemPrompt += "Use professional, precise language.\n";
     } else {

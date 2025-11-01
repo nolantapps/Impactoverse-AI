@@ -17,6 +17,8 @@ import { MessagesList } from "./MessagesList";
 import { BoardSetting } from "./BoardSetting";
 
 import { useAITeacher } from "@/app/hooks/useAITeacher";
+import Chat from "@/app/pages/ContentModal";
+import ChatArea from "@/app/pages/ContentModal";
 // -----------------------
 
 // import Navbar from "./Navbar";
@@ -37,11 +39,14 @@ function Experience() {
   }, [setMentorId]);
 
   return (
-    <div className="h-screen w-full">
+    <div className="relative overflow-hidden h-screen w-full">
       <div className="absolute z-20"></div>
       {/* <div className="absolute  p-16 flex justify-end w-full">
         <ContentModal />
       </div> */}
+      <div className="fixed top-5 left-5 z-[1000]">
+        <ChatArea />
+      </div>
       <div></div>
       <div className="z-10 md:justify-center fixed bottom-4 left-4 right-4 flex gap-3 flex-wrap justify-stretch">
         <TypingBox />

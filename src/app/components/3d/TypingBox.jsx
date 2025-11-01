@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAITeacher } from "@/app/hooks/useAITeacher";
 import { useTranscriptStore } from "@/app/hooks/useTranscriptStore";
 import VoiceRecord from "./VoiceRecord";
+import { getCookie } from "@/utils/getCookies";
 
 export const TypingBox = () => {
   const [language, setLanguage] = useState("English");
@@ -12,8 +13,44 @@ export const TypingBox = () => {
   const setTranscript = useTranscriptStore((state) => state.setTranscript);
   // const [question, setQuestion] = useState("");
 
+  // this function saves the users question to mongodb. the response from the ai is saved. the code will be in useAITeacher.jsx
+  const saveChatMessage = async (role, content) => {
+    try {
+      console.log("Got into savemesage function");
+
+      // getting user_id from cookies-browser
+      const user_id = await getCookie("userId");
+      // getting mentor id from localstorage in the browser
+      const mentorId = localStorage.getItem("selectedMentorId");
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: user_id,
+          mentor_id: mentorId,
+          role: role,
+          content: content,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        console.error("Failed to save message:", data.error);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error saving message:", error);
+      throw error;
+    }
+  };
+  // this where questions get passed to the LLM
   const ask = () => {
     askAI(transcript);
+    const userQuestion = transcript;
+    saveChatMessage("user", userQuestion);
     setTranscript("");
   };
   return (
