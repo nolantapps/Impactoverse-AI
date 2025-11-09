@@ -5,7 +5,7 @@ import ExpertSelection from "./components/ExpertSelection";
 export default function Home() {
   return (
     <div>
-      <Login />
+      <ExpertSelection />
     </div>
   );
 }

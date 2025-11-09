@@ -21,7 +21,7 @@ export async function POST(req, { params }) {
     const mentor_id = await params;
 
     const newDoc = await Document.create({
-      user_id: form.get("user_id"),
+      generatedBy: form.get("user_id"),
       mentor_id: mentor_id.mentorId,
       fileName: file.name,
       chunk_count: total,
