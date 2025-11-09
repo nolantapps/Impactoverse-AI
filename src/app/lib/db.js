@@ -34,7 +34,7 @@ const MentorSchema = new mongoose.Schema(
 const DocumentSchema = new mongoose.Schema(
   {
     mentor_id: { type: String, ref: "Mentor" },
-    user_id: { type: String, ref: "User" },
+    generatedBy: { type: String, ref: "User" },
     fileName: { type: String },
     chunk_count: { type: Number },
   },

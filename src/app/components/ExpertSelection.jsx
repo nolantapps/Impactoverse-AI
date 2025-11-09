@@ -11,6 +11,7 @@ import {
   Gem,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getCookie } from "@/utils/getCookies";
 
 // Map icon name from DB to actual component
 const iconMap = {
@@ -52,7 +53,7 @@ function AvatarCard({ avatar }) {
 
         <div className="p-6">
           <h3 className="text-xl font-bold text-purple-800 mb-2 group-hover:text-purple-600 transition-colors">
-            {avatar.name}
+            {avatar.title}
           </h3>
           <p className="text-purple-600 text-sm leading-relaxed">
             {avatar.description}
@@ -75,11 +76,32 @@ function ExpertSelection() {
   const [mentors, setMentors] = useState([]);
   const router = useRouter();
 
+  // fetching all the users mentors from the backend
   useEffect(() => {
-    fetch("/api/mentor/fetch")
-      .then((res) => res.json())
-      .then((data) => setMentors(data))
-      .catch((err) => console.error("Error fetching mentors:", err));
+    const fetchMentors = async () => {
+      try {
+        const token = await getCookie("token"); // or from cookies, wherever you store it
+
+        const res = await fetch("http://localhost:8080/mentor", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Send the token
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setMentors(data.data); // since your controller returns { message, data }
+      } catch (err) {
+        console.error("Error fetching mentors:", err);
+      }
+    };
+
+    fetchMentors();
   }, []);
 
   const handleDelete = async (mentorId) => {

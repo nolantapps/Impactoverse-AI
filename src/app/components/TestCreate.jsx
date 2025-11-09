@@ -25,6 +25,7 @@ export default function TestCreate() {
 
   const userId = getCookie("userId");
 
+  // creates mentor
   const handleCreate = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -32,16 +33,34 @@ export default function TestCreate() {
     setSuccessMsg("");
 
     try {
-      const res = await fetch("/api/mentor/create", {
+      // ✅ Get access token from cookies
+
+      const token = getCookie("token");
+
+      if (!token) {
+        throw new Error("User not authenticated. Please log in again.");
+      }
+
+      // ✅ Send POST request to your backend
+      const res = await fetch("http://localhost:8080/mentor", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, name, description: desc }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // send token
+        },
+        body: JSON.stringify({
+          title: name, // corresponds to joi schema
+          description: desc, // corresponds to joi schema
+        }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create mentor");
-      setMentorId(data.mentor._id);
-      console.log(mentorId);
+
+      if (!res.ok) throw new Error(data.message || "Failed to create mentor");
+
+      // ✅ Success
+      setMentorId(data.data._id);
+      console.log("Mentor created:", data.data);
 
       setSuccessMsg("Mentor profile created successfully!");
       setTimeout(() => {
@@ -49,6 +68,7 @@ export default function TestCreate() {
         setSuccessMsg("");
       }, 1000);
     } catch (err) {
+      console.error(err);
       setError("Failed to create mentor profile. Please try again.");
     } finally {
       setLoading(false);
@@ -509,7 +529,7 @@ export default function TestCreate() {
               </div>
 
               <button
-              onClick={handleSaveParams}
+                onClick={handleSaveParams}
                 type="submit"
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
               >
