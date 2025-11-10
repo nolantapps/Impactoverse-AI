@@ -42,7 +42,7 @@ export default function TestCreate() {
       }
 
       // ✅ Send POST request to your backend
-      const res = await fetch("http://localhost:8080/mentor", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASEURL}/mentor`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

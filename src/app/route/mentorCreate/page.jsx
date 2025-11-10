@@ -12,7 +12,7 @@ export default function CreatePage() {
       try {
         const token = await getCookie("token");
 
-        const res = await fetch("http://localhost:8080/data/config", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASEURL}/data/config`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

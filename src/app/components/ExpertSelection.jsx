@@ -25,13 +25,15 @@ const iconMap = {
   Gem,
 };
 
-function AvatarCard({ avatar }) {
-  const router = useRouter();
-
+function AvatarCard({ avatar, isAdmin, onSelect }) {
   const handleClick = () => {
-    // Store mentor id in localStorage
-    localStorage.setItem("selectedMentorId", avatar._id);
-    router.push("/route/experience");
+    if (isAdmin) {
+      // Admin can access directly
+      onSelect(avatar._id, true);
+    } else {
+      // Show access code popup for non-admins
+      onSelect(avatar._id, false);
+    }
   };
 
   const IconComponent = iconMap[avatar.icon] || User; // fallback to User
@@ -74,7 +76,12 @@ function AvatarCard({ avatar }) {
 
 function ExpertSelection() {
   const [mentors, setMentors] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
+  const [showAccessCodePopup, setShowAccessCodePopup] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
+  const [error, setError] = useState("");
+  const [selectedMentorId, setSelectedMentorId] = useState(null);
 
   // fetching all the users mentors from the backend
   useEffect(() => {
@@ -82,7 +89,7 @@ function ExpertSelection() {
       try {
         const token = await getCookie("token"); // or from cookies, wherever you store it
 
-        const res = await fetch("http://localhost:8080/mentor", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASEURL}/mentor`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -96,6 +103,10 @@ function ExpertSelection() {
 
         const data = await res.json();
         setMentors(data.data); // since your controller returns { message, data }
+        
+        // Check if user is admin
+        const userRole = data.userRole || 'user';
+        setIsAdmin(userRole === 'admin');
       } catch (err) {
         console.error("Error fetching mentors:", err);
       }
@@ -116,6 +127,43 @@ function ExpertSelection() {
       }
     } catch (error) {
       console.error("Error deleting mentor:", error);
+    }
+  };
+
+  const validateAccessCode = async (code) => {
+    try {
+      const token = await getCookie("token");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASEURL}/mentor/validate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          mentorId: selectedMentorId,
+          accessCode: code
+        }),
+      });
+
+      if (response.ok) {
+        localStorage.setItem("selectedMentorId", selectedMentorId);
+        router.push("/route/experience");
+      } else {
+        setError("Invalid access code");
+      }
+    } catch (err) {
+      setError("Error validating access code");
+      console.error(err);
+    }
+  };
+
+  const handleMentorSelect = (mentorId, isAdminUser) => {
+    if (isAdminUser) {
+      localStorage.setItem("selectedMentorId", mentorId);
+      router.push("/route/experience");
+    } else {
+      setSelectedMentorId(mentorId);
+      setShowAccessCodePopup(true);
     }
   };
 
@@ -155,7 +203,11 @@ function ExpertSelection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {mentors.map((mentor) => (
             <div key={mentor._id} className="relative">
-              <AvatarCard avatar={mentor} />
+              <AvatarCard 
+                avatar={mentor} 
+                isAdmin={isAdmin} 
+                onSelect={handleMentorSelect}
+              />
               <button
                 onClick={() => handleDelete(mentor._id)}
                 className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm"
@@ -166,6 +218,42 @@ function ExpertSelection() {
           ))}
         </div>
       </div>
+
+      {/* Access Code Popup */}
+      {showAccessCodePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-purple-800 mb-4">Enter Access Code</h3>
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+            <input
+              type="text"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              placeholder="Enter access code"
+              className="w-full px-4 py-2 border border-purple-300 rounded-lg mb-4 focus:outline-none focus:border-purple-500"
+            />
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowAccessCodePopup(false);
+                  setAccessCode("");
+                  setError("");
+                  setSelectedMentorId(null);
+                }}
+                className="px-4 py-2 text-purple-600 hover:text-purple-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => validateAccessCode(accessCode)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
