@@ -97,7 +97,7 @@ export const useAITeacher = create((set, get) => ({
       console.log("Question: ", question, "Answer: ", message.answer);
 
       // this saves the response from AI to mongodb
-      await fetch("/api/chat", {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/mentor/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

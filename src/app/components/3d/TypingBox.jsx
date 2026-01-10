@@ -23,7 +23,7 @@ export const TypingBox = () => {
       // getting mentor id from localstorage in the browser
       const mentorId = localStorage.getItem("selectedMentorId");
 
-      const response = await fetch("/api/chat", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/mentor/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
